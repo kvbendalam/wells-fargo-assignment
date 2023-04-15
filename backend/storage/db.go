@@ -1,9 +1,8 @@
 package storage
 
 import (
+	"kvbendalam/wells-fargo-assignment/config"
 	"log"
-
-	config "github.com/kvbendalam/wells-fargo-assignment/storage"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"

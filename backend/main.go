@@ -1,49 +1,47 @@
-// package main
-
-// import (
-// 	"net/http"
-
-// 	"github.com/gin-gonic/gin"
-// )
-
-// func main() {
-// 	r := gin.Default()
-// 	r.GET("/ping", func(c *gin.Context) {
-// 		c.JSON(http.StatusOK, gin.H{
-// 			"message": "pong",
-// 		})
-// 	})
-// 	r.Run()
-// }
 package main
 
 import (
-	"net/http"
-
-	"kvbendalam/wells-fargo-assignment/controller"
+	"encoding/json"
+	"fmt"
+	"kvbendalam/wells-fargo-assignment/model"
 	"kvbendalam/wells-fargo-assignment/storage"
 
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/gofiber/fiber/v2"
 )
 
 func main() {
-	// Echo instance
-	e := echo.New()
 	storage.NewDB()
-	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-
-	// Routes
-	e.GET("/", hello)
-	e.GET("/students", controller.GetStudents)
-
-	// Start server
-	e.Logger.Fatal(e.Start(":1323"))
+	db := storage.GetDBInstance()
+	db.AutoMigrate(&model.Graph{})
+	app := fiber.New()
+	app.Get("/data", GetData)
+	app.Post("/data", CreateData)
+	app.Listen(":3030")
 }
 
-// Handler
-func hello(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
+func GetData(c *fiber.Ctx) error {
+	db := storage.GetDBInstance()
+	graphs := []model.Graph{}
+
+	fmt.Println(graphs)
+
+	db.Find(&graphs)
+	return c.Status(200).JSON(graphs)
+}
+
+func CreateData(c *fiber.Ctx) error {
+	db := storage.GetDBInstance()
+
+	graphs := []model.Graph{}
+
+	err := json.Unmarshal(c.Body(), &graphs)
+	if err != nil {
+		fmt.Println("Error in unmarshalling")
+	}
+
+	for i := 0; i < len(graphs); i++ {
+		db.Exec("INSERT into graphs (x, y) values (?, ?)", graphs[i].X, graphs[i].Y)
+	}
+
+	return c.Status(200).JSON(graphs)
 }
